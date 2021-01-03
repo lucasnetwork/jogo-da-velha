@@ -1,6 +1,4 @@
-import React from 'react';
-
-function App() {
+function App(): any {
   return <div className="App">Learn React</div>;
 }
 
