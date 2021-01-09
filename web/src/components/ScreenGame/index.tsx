@@ -1,20 +1,11 @@
-import {
-  FC,
-  useEffect,
-  useRef,
-  useState,
-  MouseEvent,
-  SetStateAction,
-} from 'react';
+import { FC, useEffect, useRef, useState, MouseEvent } from 'react';
 import ticTacToeStruct, { waysToWin } from '../../utils/ticTacToeStruct';
 
 const ScreenGame: FC = () => {
   const [matriz, setMatriz] = useState(3);
   const [blocks, setBlocks] = useState<Array<number[]>>([]);
-  const [results, setResults] = useState<SetStateAction<Array<string>>>(
-    ticTacToeStruct
-  );
-  const [chara, setChara] = useState('x');
+  const [results, setResults] = useState<Array<string>>(ticTacToeStruct);
+  const [chara, setChara] = useState('o');
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   function fillRow(
@@ -65,7 +56,6 @@ const ScreenGame: FC = () => {
       fillRow(495, 260 + i * 100, context, 'horizontal');
     }
     for (let i = 0; i < matriz; i++) {
-      const array: string[] = [];
       for (let j = 0; j < matriz; j++) {
         newBlocks.push([495 + i * 100 + 10, 170 + j * 100]);
       }
@@ -99,7 +89,6 @@ const ScreenGame: FC = () => {
   }
 
   function clickBlock(e: MouseEvent<HTMLCanvasElement>): void {
-    console.log(results);
     for (let i = 0; i < matriz * matriz; i++) {
       if (
         blocks[i][0] <= e.clientX &&
@@ -107,12 +96,17 @@ const ScreenGame: FC = () => {
         blocks[i][1] <= e.clientY &&
         blocks[i][1] + 90 >= e.clientY
       ) {
+        if (results[i] !== '0') {
+          return;
+        }
+        const newResults = results.map((value, index) => {
+          if (index === i) {
+            return chara;
+          }
+          return value;
+        });
+        setResults(newResults);
         if (chara === 'x') {
-          // const newResults = results.map((blocks, index) => {
-          //   if (index === i) {
-          //     return chara;
-          //   }
-          // });
           fillX(blocks[i][0], blocks[i][1]);
         } else {
           fillCircle(blocks[i][0], blocks[i][1]);
