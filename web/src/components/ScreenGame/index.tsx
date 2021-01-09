@@ -1,11 +1,12 @@
 import { FC, useEffect, useRef, useState, MouseEvent } from 'react';
 import ticTacToeStruct, { waysToWin } from '../../utils/ticTacToeStruct';
+import fillValue from '../../utils/fillValue';
 
 const ScreenGame: FC = () => {
   const [matriz, setMatriz] = useState(3);
   const [blocks, setBlocks] = useState<Array<number[]>>([]);
   const [results, setResults] = useState<Array<string>>(ticTacToeStruct);
-  const [chara, setChara] = useState('o');
+  const [chara, setChara] = useState<'x' | 'o'>('o');
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   function fillRow(
@@ -63,32 +64,8 @@ const ScreenGame: FC = () => {
     setBlocks(newBlocks);
   }, [matriz]);
 
-  function fillX(x: number, y: number): void {
-    const context = canvasRef.current?.getContext('2d');
-
-    context?.beginPath();
-    context?.lineTo(x + 20, y + 20);
-    context?.lineTo(x + 70, y + 70);
-
-    context?.stroke();
-
-    context?.beginPath();
-    context?.moveTo(x + 70, y + 20);
-    context?.lineTo(x + 20, y + 70);
-
-    context?.stroke();
-  }
-
-  function fillCircle(x: number, y: number): void {
-    const context = canvasRef.current?.getContext('2d');
-    context?.moveTo(x, y);
-    context?.beginPath();
-    context?.arc(x + 40, y + 40, 40, 0, Math.PI * 2);
-
-    context?.stroke();
-  }
-
   function clickBlock(e: MouseEvent<HTMLCanvasElement>): void {
+    const context = canvasRef.current?.getContext('2d');
     for (let i = 0; i < matriz * matriz; i++) {
       if (
         blocks[i][0] <= e.clientX &&
@@ -106,11 +83,7 @@ const ScreenGame: FC = () => {
           return value;
         });
         setResults(newResults);
-        if (chara === 'x') {
-          fillX(blocks[i][0], blocks[i][1]);
-        } else {
-          fillCircle(blocks[i][0], blocks[i][1]);
-        }
+        fillValue(blocks[i][0], blocks[i][1], context, chara);
       }
     }
   }
