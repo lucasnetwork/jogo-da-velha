@@ -7,7 +7,7 @@ const ScreenGame: FC = () => {
   const [blocks, setBlocks] = useState<Array<number[]>>([]);
   const [results, setResults] = useState<Array<string>>(ticTacToeStruct);
   const [chara, setChara] = useState<'x' | 'o'>('o');
-  const [win, setWin] = useState(false);
+  const [win, setWin] = useState<null | boolean>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   function fillRow(
@@ -64,9 +64,22 @@ const ScreenGame: FC = () => {
     }
     setBlocks(newBlocks);
   }, [matriz]);
+  useEffect(() => {
+    setChara('x');
+  }, [chara]);
+
+  function finished(text: string): void {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (canvas?.width && context?.font) {
+      context.font = '40px Georgia';
+      context?.clearRect(0, 0, canvas.width, canvas.height);
+      context?.fillText(text, canvas.width / 2, canvas.height / 2);
+    }
+  }
 
   useEffect(() => {
-    let winAux = false;
+    let winAux: null | boolean = false;
     const existEmptyFields = results.find((value) => value === '0');
 
     waysToWin.forEach((array) => {
@@ -80,22 +93,27 @@ const ScreenGame: FC = () => {
 
         return value === chara;
       });
-      winAux = winOrLose;
-      setWin(winOrLose);
+      winAux = winOrLose || null;
+      setWin(winAux);
     });
 
     if (!existEmptyFields && !winAux) {
-      console.log('empate');
+      finished('empate');
     }
   }, [results, chara, win]);
 
   useEffect(() => {
     if (win) {
-      console.log('voce venceu');
+      finished('voce venceu');
+    } else if (win === false) {
+      finished('voce perdeu');
     }
   }, [win]);
 
   function clickBlock(e: MouseEvent<HTMLCanvasElement>): void {
+    if (win) {
+      return;
+    }
     const context = canvasRef.current?.getContext('2d');
     for (let i = 0; i < matriz * matriz; i++) {
       if (
