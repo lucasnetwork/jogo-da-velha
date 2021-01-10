@@ -18,7 +18,7 @@ class Game {
     if (this.score[position] !== '0') {
       return false;
     }
-    this.score[position] = name;
+    this.score[position] = this.playerOne;
     return this.score;
   }
 }
