@@ -13,5 +13,7 @@ module.exports = {
   rules: {
     'prettier/prettier': ['error', { endOfLine: 'auto' }],
     'linebreak-style': 0,
+    'import/extensions': 'off',
+    'import/no-unresolved': 'off',
   },
 };
