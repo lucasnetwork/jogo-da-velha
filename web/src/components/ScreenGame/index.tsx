@@ -115,26 +115,27 @@ const ScreenGame: FC = () => {
       return;
     }
     const context = canvasRef.current?.getContext('2d');
-    for (let i = 0; i < matriz * matriz; i++) {
+
+    blocks.forEach((value, index) => {
       if (
-        blocks[i][0] <= e.clientX &&
-        blocks[i][0] + 100 >= e.clientX &&
-        blocks[i][1] <= e.clientY &&
-        blocks[i][1] + 90 >= e.clientY
+        value[0] <= e.clientX &&
+        value[0] + 100 >= e.clientX &&
+        value[1] <= e.clientY &&
+        value[1] + 90 >= e.clientY
       ) {
-        if (results[i] !== '0') {
+        if (results[index] !== '0') {
           return;
         }
-        const newResults = results.map((value, index) => {
-          if (index === i) {
+        const newResults = results.map((valueResult, indexResult) => {
+          if (indexResult === index) {
             return chara;
           }
-          return value;
+          return valueResult;
         });
         setResults(newResults);
-        fillValue(blocks[i][0], blocks[i][1], context, chara);
+        fillValue(value[0], value[1], context, chara);
       }
-    }
+    });
   }
 
   return (
