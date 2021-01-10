@@ -7,19 +7,28 @@ class Game {
 
   score: Array<string>;
 
-  constructor(roomName: string) {
+  constructor(roomName: string, score?: [string]) {
     this.roomName = roomName;
     this.playerOne = 'x';
     this.playerTwo = 'o';
-    this.score = ['0', '0', '0', '0', '0', '0', '0', '0', '0'];
+    this.score = score || ['0', '0', '0', '0', '0', '0', '0', '0', '0'];
   }
 
-  setValue(name: string, position: number) {
+  setValue(position: number) {
     if (this.score[position] !== '0') {
       return false;
     }
     this.score[position] = this.playerOne;
     return this.score;
+  }
+
+  init() {
+    return {
+      roomName: this.roomName,
+      playerOneId: 1,
+      playerTwoId: 2,
+      score: this.score,
+    };
   }
 }
 
