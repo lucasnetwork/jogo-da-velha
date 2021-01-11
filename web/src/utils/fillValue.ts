@@ -11,7 +11,7 @@ interface fillValueProps {
     x: number,
     y: number,
     canvas: CanvasRenderingContext2D | null | undefined,
-    type: 'x' | 'o'
+    type: string
   ): void;
 }
 
