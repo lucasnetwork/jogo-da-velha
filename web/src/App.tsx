@@ -1,7 +1,8 @@
+import { ReactElement } from 'react';
 import ScreenGame from './components/ScreenGame';
 import GlobalStyled from './theme/globalStyled';
 
-function App(): any {
+function App(): ReactElement {
   return (
     <>
       <GlobalStyled />
