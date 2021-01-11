@@ -46,6 +46,7 @@ module.exports = {
     'import/extensions': 'off',
     'no-plusplus': 'off',
     'no-unused-expressions': 'off',
+    'no-shadow':'off'
   },
   settings: {
     'import/resolver': {
