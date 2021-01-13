@@ -1,14 +1,14 @@
 import express, { Express } from 'express';
 import cors from 'cors';
-import mongoose from 'mongoose';
 
 import routes from './routes';
+
+import './database/index';
 
 class App {
   server: Express;
 
   constructor() {
-    mongoose.connect('', { useUnifiedTopology: true });
     this.server = express();
     this.middlewares();
     this.route();
