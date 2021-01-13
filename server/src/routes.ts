@@ -1,60 +1,77 @@
 import { Router } from 'express';
-import Game from './utils/Game';
 import GameSchema from './Schemas/gameSchema';
+
+const Game = new GameSchema();
 
 const routes = Router();
 
-routes.post('/initGame', async (req, res) => {
-  const existGame = await GameSchema.findOne({ roomName: req.body.name });
-  if (existGame) {
-    res.status(400).send({ error: 'room already exist' });
-    return;
-  }
-  const initGame = new Game(req.body.name);
-  const respons = await GameSchema.create(initGame.init());
-  res.json({
-    roomName: respons.roomName,
-    playerId: respons.playerOneId,
-    score: respons.score,
-    newPosition: true,
-  });
-});
+routes.get('/game', async (req, res) => {
+  const game = Game.model;
 
-routes.post('/continue', async (req, res) => {
-  const existGame = await GameSchema.findOne({ roomName: req.body.name });
+  const existGame = await game.findOne({ roomName: String(req.query.name) });
+
   if (!existGame) {
     res.status(400).send({ error: 'room not exist' });
     return;
   }
+  if (existGame.finished !== 0) {
+    res.status(400).send({ error: 'room already finished' });
+    return;
+  }
   res.json({
     roomName: existGame.roomName,
-    playerName: existGame.playerOne,
+    playerName: existGame.playerOneId,
     score: existGame.score,
     newPosition: true,
   });
 });
 
-routes.post('/setValue', async (req, res) => {
-  const oldGame = await GameSchema.findOne({ roomName: req.body.name });
-  const game = new Game(req.body.name, oldGame?.score);
-  const value = game.setValue(req.body.position);
+routes.post('/game', async (req, res) => {
+  const game = Game.model;
+
+  const existGame = await game.findOne({ roomName: req.body.name });
+  if (existGame) {
+    res.status(400).send({ error: 'room already exist' });
+    return;
+  }
+  const response = await game.create({ roomName: req.body.name });
+  res.json({
+    roomName: response.roomName,
+    playerId: response.playerOneId,
+    score: response.score,
+    winner: response.winner,
+    newPosition: true,
+  });
+});
+
+routes.put('/game', async (req, res) => {
+  const oldGame = await Game.model.findOne({ roomName: req.body.name });
+  if (!oldGame) {
+    return;
+  }
+  const value = Game.setValue(
+    req.body.position,
+    oldGame.score,
+    req.body.player
+  );
   if (!value) {
     res.json({
-      chara: oldGame?.playerOne,
+      chara: oldGame?.playerOneId,
       score: oldGame?.score,
       newPosition: false,
     });
     return;
   }
-  const response = await GameSchema.findOneAndUpdate(
+  const verifyWin = Game.verifyWin(req.body.player, value);
+  const response = await Game.model.findOneAndUpdate(
     { roomName: req.body.name },
-    { score: value.score },
+    { score: value, finished: verifyWin }
   );
   res.json({
-    playerName: response?.playerOne,
+    playerName: response?.playerOneId,
     score: response?.score,
     newPosition: req.body.position,
-    finished: value.finished,
+    finished: verifyWin,
   });
 });
 

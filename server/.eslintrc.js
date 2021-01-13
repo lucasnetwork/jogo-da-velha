@@ -16,5 +16,6 @@ module.exports = {
     'import/extensions': 'off',
     'import/no-unresolved': 'off',
     'comma-dangle': 'off',
+    'no-underscore-dangle': 'off',
   },
 };
