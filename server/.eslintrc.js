@@ -17,5 +17,6 @@ module.exports = {
     'import/no-unresolved': 'off',
     'comma-dangle': 'off',
     'no-underscore-dangle': 'off',
+    'class-methods-use-this': 'off',
   },
 };

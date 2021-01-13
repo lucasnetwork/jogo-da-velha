@@ -1,6 +1,6 @@
 import { Schema, model, Document, Model } from 'mongoose';
 
-interface gameProps extends Document {
+export interface gameProps extends Document {
   roomName: string;
   score: Array<string>;
   playerOneId: number;
