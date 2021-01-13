@@ -1,5 +1,4 @@
 import { Schema, model, Document, Model } from 'mongoose';
-import waysToWin from '../utils/waysToWin';
 
 interface gameProps extends Document {
   roomName: string;
@@ -15,8 +14,6 @@ class Game {
 
   private newScore: Array<string>;
 
-  private winAux: null | boolean;
-
   constructor() {
     const schema = new Schema({
       roomName: String,
@@ -27,7 +24,6 @@ class Game {
       winner: Number,
     });
     this.newScore = [];
-    this.winAux = null;
 
     schema.pre<gameProps>('save', function (next): void {
       this.score = ['0', '0', '0', '0', '0', '0', '0', '0', '0'];
@@ -40,36 +36,6 @@ class Game {
 
   public get model(): Model<gameProps> {
     return this._model;
-  }
-
-  verifyWin(player: string, score: Array<string>) {
-    const existEmptyFields = score.find((value) => value === '0');
-    waysToWin.forEach((array) => {
-      if (this.winAux) {
-        return;
-      }
-      const winOrLose = score.every((value, index) => {
-        if (array[index] === '0') {
-          return true;
-        }
-
-        return value === player;
-      });
-      this.winAux = winOrLose || null;
-    });
-    if (this.winAux === false) {
-      return 2;
-    }
-    if (this.winAux) {
-      return 1;
-    }
-    if (this.winAux === null) {
-      return 0;
-    }
-    if (!existEmptyFields) {
-      return 3;
-    }
-    return 0;
   }
 
   setValue(

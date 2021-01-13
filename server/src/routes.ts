@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import GameSchema from './Schemas/gameSchema';
+import Result from './Entity/Result';
 
 const Game = new GameSchema();
 
@@ -62,7 +63,7 @@ routes.put('/game', async (req, res) => {
     });
     return;
   }
-  const verifyWin = Game.verifyWin(req.body.player, value);
+  const verifyWin = Result.validateWin(req.body.player, value);
   const response = await Game.model.findOneAndUpdate(
     { roomName: req.body.name },
     { score: value, finished: verifyWin }
