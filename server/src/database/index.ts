@@ -8,7 +8,7 @@ class DB {
   }
 
   mongo() {
-    this.mongoose.connect('', { useUnifiedTopology: true });
+    this.mongoose.connect(process.env.MONGO, { useUnifiedTopology: true });
   }
 }
 

@@ -1,3 +1,5 @@
 import dotEnv from 'dotenv';
 
-export default dotEnv.config();
+dotEnv.config();
+
+export default {};
