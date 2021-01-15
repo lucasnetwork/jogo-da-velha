@@ -1,83 +1,102 @@
-import { Model } from 'mongoose';
-import { Request, Response } from 'express';
-import GameSchema, { gameProps } from '../Schemas/gameSchema';
+import GameSchema from '../Schemas/gameSchema';
 import Result from '../Entity/Result';
 
-const Game = new GameSchema();
+const game = new GameSchema();
 
 class GameController {
-  private game: Model<gameProps>;
-
-  constructor() {
-    this.game = Game.model;
-  }
-
-  async index(req: Request, res: Response) {
-    const existGame = await this.game.findOne({
-      roomName: String(req.query.name),
+  public async index(name: any, namePlayer: string) {
+    const existGame = await game.model.findOne({
+      roomName: name,
     });
 
     if (!existGame) {
-      res.status(400).send({ error: 'room not exist' });
       return;
     }
-    if (existGame.finished !== 0) {
-      res.status(400).send({ error: 'room already finished' });
+    if (!namePlayer) {
+      await existGame.updateOne({ playerTwoId: 'o' });
+      return {
+        roomName: existGame.roomName,
+        playerName: 'o',
+        score: existGame.score,
+        winner: '0',
+        newPosition: -1,
+        turn: existGame.turn,
+      };
+    }
+    if (existGame.finished > -1) {
       return;
     }
-    res.json({
+    return {
       roomName: existGame.roomName,
-      playerName: existGame.playerOneId,
       score: existGame.score,
-      newPosition: true,
-    });
+      newPosition: -1,
+      turn: existGame.turn,
+      winner: '0',
+    };
   }
 
-  async create(req: Request, res: Response) {
-    const existGame = await this.game.findOne({ roomName: req.body.name });
+  async create(name: any) {
+    const existGame = await game.model.findOne({ roomName: name });
     if (existGame) {
-      res.status(400).send({ error: 'room already exist' });
       return;
     }
-    const response = await this.game.create({ roomName: req.body.name });
-    res.json({
-      roomName: response.roomName,
-      playerId: response.playerOneId,
-      score: response.score,
-      winner: response.winner,
-      newPosition: true,
+    const response = await game.model.create({
+      roomName: name,
+      playerOneId: 'x',
+      turn: 'x',
     });
+    return {
+      roomName: response.roomName,
+      playerName: response.playerOneId,
+      score: response.score,
+      winner: '0',
+      newPosition: -2,
+      turn: response.turn,
+    };
   }
 
-  async update(req: Request, res: Response) {
-    const oldGame = await this.game.findOne({ roomName: req.body.name });
+  async update(name: string, position: number, namePlayer: string) {
+    const oldGame = await game.model.findOne({ roomName: name });
     if (!oldGame) {
       return;
     }
-    const value = Game.setValue(
-      req.body.position,
-      oldGame.score,
-      req.body.player
-    );
-    if (!value) {
-      res.json({
-        chara: oldGame?.playerOneId,
+    const { turn } = oldGame;
+
+    const newScore = game.setValue(position, oldGame.score, namePlayer);
+    if (!newScore) {
+      return {
+        playerName: oldGame?.playerOneId,
         score: oldGame?.score,
-        newPosition: false,
+      };
+    }
+    const verifyWin = Result.validateWin(namePlayer, newScore);
+    let winner;
+    if (verifyWin === 0) {
+      winner = namePlayer;
+    } else if (verifyWin === 1) {
+      winner = 'empate';
+    } else {
+      winner = '0';
+    }
+    try {
+      await oldGame.updateOne({
+        score: newScore,
+        finished: verifyWin,
+        turn: oldGame.turn === 'x' ? 'o' : 'x',
+        winner,
       });
+    } catch {
       return;
     }
-    const verifyWin = Result.validateWin(req.body.player, value);
-    const response = await Game.model.findOneAndUpdate(
-      { roomName: req.body.name },
-      { score: value, finished: verifyWin }
-    );
-    res.json({
-      playerName: response?.playerOneId,
-      score: response?.score,
-      newPosition: req.body.position,
+    return {
+      roomName: oldGame.roomName,
+      playerName: namePlayer,
+      score: newScore,
+      newPosition: position,
       finished: verifyWin,
-    });
+      turn: turn === 'x' ? 'o' : 'x',
+      winner,
+    };
   }
 }
 
