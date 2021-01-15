@@ -19,5 +19,7 @@ module.exports = {
     'no-underscore-dangle': 'off',
     'class-methods-use-this': 'off',
     'consistent-return': 'off',
+    'object-curly-newline': 'off',
+    'func-names': 'off',
   },
 };

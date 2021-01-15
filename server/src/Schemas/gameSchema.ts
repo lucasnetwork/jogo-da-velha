@@ -3,10 +3,11 @@ import { Schema, model, Document, Model } from 'mongoose';
 export interface gameProps extends Document {
   roomName: string;
   score: Array<string>;
-  playerOneId: number;
-  playerTwoId: number;
+  playerOneId: string;
+  playerTwoId: string;
   finished: number;
-  winner?: number;
+  turn: string;
+  winner?: string;
 }
 
 class Game {
@@ -18,20 +19,22 @@ class Game {
     const schema = new Schema({
       roomName: String,
       score: [String],
-      playerOneId: Number,
-      playerTwoId: Number,
+      playerOneId: String,
+      playerTwoId: String,
       finished: Number,
-      winner: Number,
+      turn: String,
+      winner: String,
     });
     this.newScore = [];
 
     schema.pre<gameProps>('save', function (next): void {
       this.score = ['0', '0', '0', '0', '0', '0', '0', '0', '0'];
-      this.winner = 0;
+      this.winner = '0';
+      this.finished = -1;
       next();
     });
 
-    this._model = model<gameProps>('Game', schema);
+    this._model = model<gameProps>('gameData', schema);
   }
 
   public get model(): Model<gameProps> {
@@ -48,7 +51,6 @@ class Game {
       return false;
     }
     this.newScore[position] = player;
-
     return this.newScore;
   }
 }
