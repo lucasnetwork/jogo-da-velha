@@ -1,28 +1,43 @@
 import { FC, useEffect, useRef, useState, MouseEvent } from 'react';
-import api from '../../services/api';
+import { io } from 'socket.io-client';
 import fillValue from '../../utils/fillValue';
+import { P } from './styles';
 
 interface gameProps {
   roomName: string | null;
-  blocks: Array<number[]>;
-  score: Array<string>;
   playerName: string;
-  newPosition?: number | boolean;
+  score: Array<string>;
+  newPosition: number;
   initGame: boolean;
-  finished?: string | null;
+  winner: string;
+  turn: string;
+  blocks: Array<number[]>;
+}
+
+interface responseProps {
+  roomName: string;
+  playerName: string;
+  score: Array<string>;
+  newPosition: number;
+  initGame: true;
+  winner: string;
+  turn: string;
 }
 
 const ScreenGame: FC = () => {
-  const [matriz, setMatriz] = useState(3);
+  const [matriz] = useState(3);
   const [game, setGame] = useState<gameProps>({
     roomName: '',
     blocks: [],
     score: [],
+    newPosition: -1,
     playerName: '',
     initGame: false,
-    finished: null,
+    winner: '0',
+    turn: '',
   });
   const [gameName, setGameName] = useState<string>('');
+  const [socket] = useState(() => io('http://localhost:3333'));
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   function fillRow(
@@ -59,35 +74,29 @@ const ScreenGame: FC = () => {
       canvas?.fill();
     }
   }
-
   useEffect(() => {
-    const blocks: Array<number[]> = [];
-    const roomName = localStorage.getItem('roomName');
-    if (!roomName) {
-      return;
-    }
-
-    async function initialGame(): Promise<void> {
-      const response = await api.post('continue', { name: roomName });
-      if (response.status > 400) {
+    socket.on('valueGame', (response: responseProps) => {
+      if (!response) {
         return;
       }
-      for (let i = 0; i < matriz; i++) {
-        for (let j = 0; j < matriz; j++) {
-          blocks.push([495 + i * 100 + 10, 170 + j * 100]);
-        }
-      }
-      setGame({
-        blocks,
-        roomName,
-        playerName: response.data.playerId === 1 ? 'x' : 'o',
-        score: response.data.score,
-        newPosition: response.data.newPosition,
-        initGame: true,
+
+      setGame((props) => {
+        const playerName =
+          props.playerName === '' ? response.playerName : props.playerName;
+        return {
+          ...props,
+          roomName: response.roomName,
+          playerName,
+          score: response.score,
+          newPosition: response.newPosition,
+          initGame: true,
+          winner: response.winner,
+          turn: response.turn,
+        };
       });
-    }
-    initialGame();
-  }, [matriz]);
+    });
+  }, [socket]);
+
   useEffect(() => {
     const blocks: Array<number[]> = [];
     for (let i = 0; i < matriz; i++) {
@@ -113,7 +122,7 @@ const ScreenGame: FC = () => {
     for (let i = 0; i <= matriz - 2; i++) {
       fillRow(495, 260 + i * 100, context, 'horizontal');
     }
-  }, [matriz, game]);
+  }, [matriz, game.initGame]);
 
   function finished(text: string): void {
     const canvas = canvasRef.current;
@@ -131,30 +140,39 @@ const ScreenGame: FC = () => {
     if (game.score.length === 0) {
       return;
     }
-    if (game.newPosition === true) {
+    if (game.newPosition !== -2) {
       game.blocks.forEach((value, index) => {
         if (game.score[index] !== '0') {
-          fillValue(value[0], value[1], context, game.score[index]);
+          fillValue(
+            game.blocks[index][0],
+            game.blocks[index][1],
+            context,
+            game.score[index]
+          );
         }
       });
     }
   }, [game]);
 
   useEffect(() => {
-    if (game.finished === 'venceu') {
-      finished('voce venceu');
-    } else if (game.finished === 'empate') {
-      finished('empate');
+    if (game.winner === '0') {
+      return;
     }
-  }, [game.finished]);
+    if (game.winner === game.playerName) {
+      finished('voce venceu');
+    } else if (game.winner === 'empate') {
+      finished('empate');
+    } else {
+      finished('voce perdeu');
+    }
+  }, [game.winner, game.playerName]);
 
   async function clickBlock(
     e: MouseEvent<HTMLCanvasElement>
   ): Promise<void | false> {
-    if (game.finished) {
+    if (game.winner !== '0' || game.turn !== game.playerName) {
       return;
     }
-    const context = canvasRef.current?.getContext('2d');
 
     game.blocks.forEach(async (value, index) => {
       if (
@@ -163,20 +181,7 @@ const ScreenGame: FC = () => {
         value[1] <= e.clientY &&
         value[1] + 90 >= e.clientY
       ) {
-        const response = await api.post('setValue', {
-          name: game.roomName,
-          position: index,
-        });
-        if (!response.data.score) {
-          return;
-        }
-        setGame((props) => ({
-          ...props,
-          score: response.data.score,
-          newPosition: response.data.newPosition,
-          finished: response.data.finished,
-        }));
-        fillValue(value[0], value[1], context, game.playerName);
+        socket.emit('setValue', game.roomName, index, game.playerName);
       }
     });
   }
@@ -184,12 +189,18 @@ const ScreenGame: FC = () => {
   return (
     <>
       {game.initGame ? (
-        <canvas
-          onClick={(e) => clickBlock(e)}
-          ref={canvasRef}
-          width="1166"
-          height="520"
-        />
+        <>
+          <P>
+            player:
+            {game.playerName}
+          </P>
+          <canvas
+            onClick={(e) => clickBlock(e)}
+            ref={canvasRef}
+            width="1166"
+            height="520"
+          />
+        </>
       ) : (
         <div>
           <input
@@ -199,23 +210,19 @@ const ScreenGame: FC = () => {
           />
           <button
             type="button"
-            onClick={async () => {
-              const response = await api.post('initGame', { name: gameName });
-              if (!response) {
-                console.log('sala já existe');
-              }
-              localStorage.setItem('roomName', response.data.roomName);
-              setGame((props) => ({
-                ...props,
-                roomName: response.data.roomName,
-                playerName: response.data.playerId === 1 ? 'x' : 'o',
-                score: response.data.score,
-                newPosition: response.data.newPosition,
-                initGame: true,
-              }));
+            onClick={() => {
+              socket.emit('initGame', gameName);
             }}
           >
             entrar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              socket.emit('continueGame', gameName);
+            }}
+          >
+            open
           </button>
         </div>
       )}

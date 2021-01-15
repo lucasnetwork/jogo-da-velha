@@ -46,7 +46,8 @@ module.exports = {
     'import/extensions': 'off',
     'no-plusplus': 'off',
     'no-unused-expressions': 'off',
-    'no-shadow':'off'
+    'no-shadow':'off',
+    'react/prop-types': 'off',
   },
   settings: {
     'import/resolver': {
