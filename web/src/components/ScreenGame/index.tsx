@@ -2,7 +2,7 @@ import { FC, useEffect, useRef, useState, MouseEvent } from 'react';
 import { io } from 'socket.io-client';
 import fillValue from '../../utils/fillValue';
 import fillRow from '../../utils/fillRow';
-import { P } from './styles';
+import Container, { P, Button, ContainerInputs } from './styles';
 
 interface gameProps {
   roomName: string | null;
@@ -68,7 +68,10 @@ const ScreenGame: FC = () => {
     const blocks: Array<number[]> = [];
     for (let i = 0; i < matriz; i++) {
       for (let j = 0; j < matriz; j++) {
-        blocks.push([495 + i * 100 + 10, 170 + j * 100]);
+        blocks.push([
+          100 * i + (6 * (i + 1)) / (i + 1),
+          j * 100 + (6 * (j + 1)) / (j + 1),
+        ]);
       }
     }
     setGame((props) => ({
@@ -79,15 +82,14 @@ const ScreenGame: FC = () => {
 
   useEffect(() => {
     const context = canvasRef.current?.getContext('2d');
-
     if (context?.fillStyle) {
       context.fillStyle = '#4B4B4B';
     }
     for (let i = 0; i <= matriz - 2; i++) {
-      fillRow(600 + i * 100, 170, context, 'vertical');
+      fillRow(100 + i * 100, 0, context, 'vertical');
     }
     for (let i = 0; i <= matriz - 2; i++) {
-      fillRow(495, 260 + i * 100, context, 'horizontal');
+      fillRow(0, 100 + i * 100, context, 'horizontal');
     }
   }, [matriz, game.initGame]);
 
@@ -140,13 +142,18 @@ const ScreenGame: FC = () => {
     if (game.winner !== '0' || game.turn !== game.playerName) {
       return;
     }
+    if (!canvasRef.current?.offsetLeft && !canvasRef.current?.offsetTop) {
+      return;
+    }
+    const pageX = e.clientX - canvasRef.current?.offsetLeft;
+    const pageY = e.clientY - canvasRef.current?.offsetTop;
 
     game.blocks.forEach(async (value, index) => {
       if (
-        value[0] <= e.clientX &&
-        value[0] + 100 >= e.clientX &&
-        value[1] <= e.clientY &&
-        value[1] + 90 >= e.clientY
+        value[0] <= pageX &&
+        value[0] + 100 >= pageX &&
+        value[1] <= pageY &&
+        value[1] + 90 >= pageY
       ) {
         socket.emit('setValue', game.roomName, index, game.playerName);
       }
@@ -154,46 +161,56 @@ const ScreenGame: FC = () => {
   }
 
   return (
-    <>
+    <Container>
       {game.initGame ? (
         <>
-          <P>
-            player:
+          <p className="player">
+            <strong> Player:</strong>
             {game.playerName}
-          </P>
+          </p>
+          <h1 className="roomName">{game.roomName}</h1>
           <canvas
             onClick={(e) => clickBlock(e)}
             ref={canvasRef}
-            width="1166"
-            height="520"
+            width="330"
+            height="330"
           />
         </>
       ) : (
-        <div>
-          <input
-            type="text"
-            value={gameName}
-            onChange={(e) => setGameName(e.target.value)}
-          />
-          <button
-            type="button"
-            onClick={() => {
-              socket.emit('initGame', gameName);
-            }}
-          >
-            entrar
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              socket.emit('continueGame', gameName);
-            }}
-          >
-            open
-          </button>
-        </div>
+        <ContainerInputs>
+          <label htmlFor="gameName">
+            <p>Digite o nome da sala para entrar</p>
+            <input
+              id="gameName"
+              type="text"
+              value={gameName}
+              onChange={(e) => setGameName(e.target.value)}
+            />
+          </label>
+          <div className="buttons">
+            <Button
+              type="button"
+              onClick={() => {
+                const roomName = parseInt(String(Math.random() * 10000), 10);
+                socket.emit('initGame', roomName);
+              }}
+            >
+              Criar Sala
+            </Button>
+            <Button
+              secondary
+              disabled={gameName === ''}
+              type="button"
+              onClick={() => {
+                socket.emit('continueGame', gameName);
+              }}
+            >
+              open
+            </Button>
+          </div>
+        </ContainerInputs>
       )}
-    </>
+    </Container>
   );
 };
 
