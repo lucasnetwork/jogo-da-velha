@@ -2,7 +2,7 @@ import { FC, useEffect, useRef, useState, MouseEvent } from 'react';
 import { io } from 'socket.io-client';
 import fillValue from '../../utils/fillValue';
 import fillRow from '../../utils/fillRow';
-import Container, { P, Button, ContainerInputs } from './styles';
+import Container, { Button, ContainerInputs } from './styles';
 
 interface gameProps {
   roomName: string | null;
@@ -99,7 +99,7 @@ const ScreenGame: FC = () => {
     if (canvas?.width && context?.font) {
       context.font = '40px Georgia';
       context?.clearRect(0, 0, canvas.width, canvas.height);
-      context?.fillText(text, canvas.width / 2, canvas.height / 2);
+      context?.fillText(text, 0, canvas.height / 2);
     }
   }
 
@@ -168,7 +168,10 @@ const ScreenGame: FC = () => {
             <strong> Player:</strong>
             {game.playerName}
           </p>
-          <h1 className="roomName">{game.roomName}</h1>
+          <h1 className="roomName">
+            Sala:
+            {game.roomName}
+          </h1>
           <canvas
             onClick={(e) => clickBlock(e)}
             ref={canvasRef}
